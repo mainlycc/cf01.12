@@ -1,9 +1,11 @@
 const { sql } = require('@vercel/postgres');
 
+const DATABASE_URL = `postgres://${process.env.POSTGRES_USER}:${process.env.POSTGRES_PASSWORD}@${process.env.POSTGRES_HOST}:5432/${process.env.POSTGRES_DATABASE}?sslmode=require`;
+
 async function createPersonalDataTable() {
   try {
     console.log('Tworzenie tabeli personal_data...');
-    console.log('Connection string:', process.env.POSTGRES_URL_NON_POOLING);
+    console.log('Używany connection string:', DATABASE_URL.replace(process.env.POSTGRES_PASSWORD || '', '****'));
     
     await sql.query(`
       CREATE TABLE IF NOT EXISTS personal_data (
@@ -18,7 +20,8 @@ async function createPersonalDataTable() {
     console.error('Błąd podczas tworzenia tabeli personal_data:', {
       message: error.message,
       code: error.code,
-      detail: error.detail
+      detail: error.detail,
+      connectionString: DATABASE_URL.replace(process.env.POSTGRES_PASSWORD || '', '****')
     });
     throw error;
   }

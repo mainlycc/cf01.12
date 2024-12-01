@@ -1,15 +1,12 @@
 import { sql } from '@vercel/postgres';
 import { unstable_noStore as noStore } from 'next/cache';
 
-const config = {
-  connectionString: process.env.POSTGRES_URL_NON_POOLING,
-};
+const DATABASE_URL = `postgres://${process.env.POSTGRES_USER}:${process.env.POSTGRES_PASSWORD}@${process.env.POSTGRES_HOST}:5432/${process.env.POSTGRES_DATABASE}?sslmode=require`;
 
 export async function savePersonalData(name: string, postalCode: string) {
   noStore();
   try {
     console.log('Próba zapisania danych:', { name, postalCode });
-    console.log('Używany connection string:', process.env.POSTGRES_URL_NON_POOLING);
     
     const result = await sql.query(
       'INSERT INTO personal_data (name, postal_code) VALUES ($1, $2) RETURNING id, name, postal_code',
@@ -24,7 +21,8 @@ export async function savePersonalData(name: string, postalCode: string) {
       code: error?.code,
       detail: error?.detail,
       where: error?.where,
-      hint: error?.hint
+      hint: error?.hint,
+      connectionString: DATABASE_URL.replace(process.env.POSTGRES_PASSWORD || '', '****')
     });
     throw new Error(`Nie udało się zapisać danych osobowych: ${error?.message || 'Nieznany błąd'}`);
   }
