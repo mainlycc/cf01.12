@@ -3,30 +3,47 @@ import { savePersonalData } from '@/lib/db';
 
 export async function POST(request: Request) {
   try {
-    const { name, postalCode } = await request.json();
+    console.log('Otrzymano żądanie POST');
+    
+    const body = await request.json();
+    console.log('Otrzymane dane:', body);
+    
+    const { name, postalCode } = body;
 
     if (!name || !postalCode) {
+      console.log('Brak wymaganych danych:', { name, postalCode });
       return NextResponse.json(
         { error: 'Brak wymaganych danych' },
         { status: 400 }
       );
     }
 
+    console.log('Próba zapisania danych do bazy...');
     const result = await savePersonalData(name, postalCode);
     
     if (!result) {
-      throw new Error('Nie udało się zapisać danych');
+      console.error('Brak wyniku z bazy danych');
+      throw new Error('Nie udało się zapisać danych - brak odpowiedzi z bazy');
     }
     
-    return NextResponse.json({ success: true, id: result.id });
+    console.log('Dane zapisane pomyślnie:', result);
+    return NextResponse.json({ 
+      success: true, 
+      id: result.id,
+      data: result 
+    });
   } catch (error: any) {
-    console.error('Szczegóły błędu:', {
+    console.error('Szczegóły błędu API:', {
       message: error?.message || 'Nieznany błąd',
-      name: error?.name || 'Nieznany typ błędu'
+      name: error?.name || 'Nieznany typ błędu',
+      stack: error?.stack
     });
     
     return NextResponse.json(
-      { error: 'Wystąpił błąd podczas zapisywania danych' },
+      { 
+        error: 'Wystąpił błąd podczas zapisywania danych',
+        details: error?.message 
+      },
       { status: 500 }
     );
   }
