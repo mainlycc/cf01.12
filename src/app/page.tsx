@@ -8,9 +8,13 @@ export default function Home() {
     postalCode: ''
   });
   const [message, setMessage] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
+    setMessage('');
+    
     try {
       const response = await fetch('/api/submit-data', {
         method: 'POST',
@@ -20,13 +24,19 @@ export default function Home() {
         body: JSON.stringify(formData),
       });
 
-      if (!response.ok) throw new Error('Błąd podczas wysyłania danych');
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Błąd podczas wysyłania danych');
+      }
 
       setMessage('Dane zostały pomyślnie zapisane!');
       setFormData({ name: '', postalCode: '' });
-    } catch (error) {
-      setMessage('Wystąpił błąd podczas zapisywania danych.');
+    } catch (error: any) {
+      setMessage(error.message || 'Wystąpił błąd podczas zapisywania danych.');
       console.error('Error:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -46,6 +56,7 @@ export default function Home() {
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               required
+              disabled={isLoading}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -60,6 +71,7 @@ export default function Home() {
               value={formData.postalCode}
               onChange={(e) => setFormData({ ...formData, postalCode: e.target.value })}
               required
+              disabled={isLoading}
               pattern="[0-9]{2}-[0-9]{3}"
               placeholder="00-000"
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -68,9 +80,10 @@ export default function Home() {
 
           <button
             type="submit"
-            className="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition-colors"
+            disabled={isLoading}
+            className="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition-colors disabled:bg-blue-300"
           >
-            Zapisz dane
+            {isLoading ? 'Zapisywanie...' : 'Zapisz dane'}
           </button>
         </form>
 
